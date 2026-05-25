@@ -23,10 +23,10 @@ class Maze:
         print(f"Maze seed: {seed}")
 
         self.__create_cells()
-        time.sleep(1)
         self.__break_entrance_and_exit()
         self.__break_walls_r(0, 0)
         self.__reset_cells_visited()
+        time.sleep(1)
 
 
     def __create_cells(self):
@@ -49,12 +49,15 @@ class Maze:
         x2 = x1 + self.__cell_size_x
         y2 = y1 + self.__cell_size_y
         self.__cells[i][j].draw(x1, y1, x2, y2)
-        self.__animate()
+        self.__animate(sleep=0.003)
 
-    def __animate(self, sleep: float = 0.002):
+    def __animate(self, sleep: float| None = None):
         if self.__win is None:
             return
         self.__win.redraw()
+        if sleep is None:
+            sleep = self.__win.get_speed()
+        
         time.sleep(sleep)
     
     def __break_entrance_and_exit(self):
@@ -119,7 +122,7 @@ class Maze:
        return self._solve_r(0, 0)
 
     def _solve_r(self, i, j) -> bool:
-        self.__animate(sleep=0.02)
+        self.__animate()
         self.__cells[i][j].visited = True
         if self.__cells[i][j] == self.__cells[-1][-1]:
             return True
@@ -183,7 +186,7 @@ class Maze:
         solved = False
         while queue:
             i, j = queue.popleft()  # <-- popleft makes it a queue (FIFO)
-            self.__animate(sleep=0.005)
+            self.__animate()
 
             if i == self.__num_cols - 1 and j == self.__num_rows - 1:
                 solved = True
@@ -260,21 +263,7 @@ class Maze:
                                 self.__cells[prev[0]][prev[1]], undo=True
                             )
         
-        
-            
         return solved
     
-    def sajs(self):
-        solved = False
-        came_from: dict[tuple[int, int], tuple[int, int] | None] = {(0, 0): None}
-        if solved:
-            current = (self.__num_cols - 1, self.__num_rows - 1)
-            while current is not None:
-                prev = came_from[current]
-                if prev is not None:
-                    self.__cells[current[0]][current[1]].draw_move(
-                        self.__cells[prev[0]][prev[1]]
-                    )
-                current = prev
 
         

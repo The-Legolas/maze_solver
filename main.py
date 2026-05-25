@@ -1,6 +1,7 @@
 from graphics import Window
 from maze import Maze
 import sys
+import random
 
 
 def main():
@@ -16,15 +17,20 @@ def main():
 def run_maze(win: Window):
     win.clear_canvas()
 
-    num_rows = 22
-    num_cols = 32
+    seed = win.get_seed()
+    if seed == "":
+        seed = None
+    random.seed(seed)
+    print("Seed", seed)
+
+    num_rows, num_cols = win.get_maze_dimensions()
     margin = 50
     screen_x = 800
     screen_y = 600
     cell_size_x = (screen_x - 2 * margin) / num_cols
     cell_size_y = (screen_y - 2 * margin) / num_rows
 
-    maze = Maze(margin, margin, num_rows, num_cols, cell_size_x, cell_size_y, win, seed=85530929557)
+    maze = Maze(margin, margin, num_rows, num_cols, cell_size_x, cell_size_y, win, seed=seed)
     print("maze created")
     if win.get_algo() == "DFS":
         is_solvable = maze.solve_dfs()
