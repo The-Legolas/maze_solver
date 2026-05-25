@@ -5,8 +5,8 @@ import sys
 
 def main():
     
-    num_rows = 12
-    num_cols = 16
+    num_rows = 22
+    num_cols = 32
     margin = 50
     screen_x = 800
     screen_y = 600
@@ -16,7 +16,7 @@ def main():
     sys.setrecursionlimit(10000)
     win = Window(screen_x, screen_y)
 
-    maze = Maze(margin, margin, num_rows, num_cols, cell_size_x, cell_size_y, win)
+    maze = Maze(margin, margin, num_rows, num_cols, cell_size_x, cell_size_y, win, 85530929557)
     print("maze created")
     is_solvable = maze.solve()
     if not is_solvable:
