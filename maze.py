@@ -115,9 +115,8 @@ class Maze:
             for cell in col:
                 cell.visited = False
 
-    def solve(self) -> bool:
-        return self.solve_bfs()
-       #return self._solve_r(0, 0)
+    def solve_dfs(self) -> bool:
+       return self._solve_r(0, 0)
 
     def _solve_r(self, i, j) -> bool:
         self.__animate(sleep=0.02)
@@ -173,7 +172,7 @@ class Maze:
 
         return False
 
-    def solve_bfs(self):
+    def solve_bfs(self)-> bool:
         queue = deque()
         queue.append((0, 0))
         self.__cells[0][0].visited = True

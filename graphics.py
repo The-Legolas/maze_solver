@@ -1,13 +1,28 @@
 from __future__ import annotations
-from tkinter import Tk, BOTH, Canvas
+from tkinter import Tk, BOTH, Canvas, Button
 
 class Window:
-    def __init__(self, width: int, height: int) -> None:
+    def __init__(self, width: int, height: int, on_new_maze=None) -> None:
         self.__root  = Tk()
         self.__root.title("Maze Solver")
-        self.__canvas = Canvas(master=self.__root, bg="white", height=height, width=width)
-        self.__canvas.pack(fill=BOTH, expand=1) 
+        
+        self.__canvas = Canvas(self.__root, bg="white", height=height, width=width)
+        self.__canvas.pack(fill=BOTH, expand=1)
+
+        if on_new_maze:
+            btn = Button(self.__root, text="New Maze", command=on_new_maze)
+            btn.pack()
+
         self.__running = False
+
+        self.__algo = "DFS"  # track current algorithm
+        self.__algo_btn = Button(
+            self.__root, 
+            text="Algorithm: DFS", 
+            command=self.__toggle_algo
+        )
+        self.__algo_btn.pack(side="left")
+
         self.__root.protocol("WM_DELETE_WINDOW", self.close)
 
     def redraw(self):
@@ -24,6 +39,20 @@ class Window:
     
     def draw_line(self, line: Line, fill_color: str ="black"):
         line.draw(self.__canvas, fill_color)
+    
+    def __toggle_algo(self):
+        if self.__algo == "DFS":
+            self.__algo = "BFS"
+        else:
+            self.__algo = "DFS"
+        self.__algo_btn.config(text=f"Algorithm: {self.__algo}")
+
+    def get_algo(self):
+        return self.__algo
+
+    def clear_canvas(self):
+        print("clearing canvas")
+        self.__canvas.delete("all")
 
     def close(self):
         self.__running = False
