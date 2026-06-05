@@ -12,6 +12,17 @@ A breakdown of everything is provided further down.
     <img src="images/screenshot.png" alt="Maze Solver Screenshot" width="700">
 </p>
 
+## Table of Contents
+
+- [Features](#features)
+- [Demo](#demo)
+- [Customizations](#customizations)
+- [Project Structure](#project-structure)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [How to Run](#how-to-run)
+- [Running Tests](#running-tests)
+
 ## Features
 
 - Random maze generation
@@ -63,6 +74,7 @@ The selected algorithm will be used to solve the maze.
 
 ## Project Structure
 
+```text
 maze_solver/
 ├── images/
 │   ├── demo.gif
@@ -73,7 +85,8 @@ maze_solver/
 ├── main.py
 ├── maze.py
 ├── README.md
-└── tests.py
+└── test.py
+```
 
 ## Requirements
 
@@ -158,3 +171,14 @@ python3 main.py
 ```
 
 This opens a window where a maze is generated and then solved.
+
+## Running Tests
+
+To ensure the maze logic is functioning correctly,
+you can run the built-in unit tests.
+
+From the root directory, run:
+
+```bash
+python3 tests.py
+```
