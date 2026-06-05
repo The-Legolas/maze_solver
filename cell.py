@@ -53,17 +53,17 @@ class Cell:
         if self.__win is None:
             return
         
-        half_length = abs(self.__x2 - self.__x1) // 2
-        x_center = half_length + self.__x1
-        y_center = half_length + self.__y1
+        x_half = abs(self.__x2 - self.__x1) // 2
+        y_half = abs(self.__y2 - self.__y1) // 2
+        x_center = self.__x1 + x_half
+        y_center = self.__y1 + y_half
 
-        half_length2 = abs(to_cell.__x2 - to_cell.__x1) // 2
-        x_center2 = half_length2 + to_cell.__x1
-        y_center2 = half_length2 + to_cell.__y1
+        x_half2 = abs(to_cell.__x2 - to_cell.__x1) // 2
+        y_half2 = abs(to_cell.__y2 - to_cell.__y1) // 2
+        x_center2 = to_cell.__x1 + x_half2
+        y_center2 = to_cell.__y1 + y_half2
 
-        fill_color = "red"
-        if undo:
-            fill_color = "gray"
+        fill_color = "red" if not undo else "gray"
 
         line = Line(Point(x_center, y_center), Point(x_center2, y_center2))
         self.__win.draw_line(line, fill_color)

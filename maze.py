@@ -1,6 +1,7 @@
 from graphics import Window 
 from cell import Cell
 from collections import deque
+import heapq
 import time
 import random
 
@@ -16,6 +17,14 @@ class Maze:
         self.__cell_size_x = cell_size_x
         self.__cell_size_y = cell_size_y
         self.__win = win
+
+        self.__margin_x = x1
+        self.__margin_y = y1
+        self.__solution_path: set[tuple[tuple[int, int], tuple[int, int]]] = set()
+
+        if self.__win is not None:
+            self.__win.set_resize_callback(self.__on_window_resize)
+            
         if seed is None:
             seed = random.randint(0, 1_000_000_000_00)
 
@@ -30,6 +39,7 @@ class Maze:
 
 
     def __create_cells(self):
+        self.__solution_path = set()
         for i in range(self.__num_cols):
             col_cells = []
             for j in range(self.__num_rows):
@@ -50,6 +60,45 @@ class Maze:
         y2 = y1 + self.__cell_size_y
         self.__cells[i][j].draw(x1, y1, x2, y2)
         self.__animate(sleep=0.003)
+
+    def __on_window_resize(self, new_width, new_height):
+        if self.__win is None:
+            return
+        canvas_width, canvas_height = self.__win.get_canvas_size()
+        print(f"resize canvas size: {canvas_width}, {canvas_height}")
+        self.__cell_size_x = (canvas_width - 2 * self.__margin_x) / self.__num_cols
+        self.__cell_size_y = (canvas_height - 2 * self.__margin_y) / self.__num_rows
+        self.__win.clear_canvas()
+        self.__redraw_all_cells()
+        if self.__solution_path:
+            self.__redraw_solution()
+
+    def __redraw_all_cells(self):
+        for i in range(self.__num_cols):
+            for j in range(self.__num_rows):
+                x1 = self.__x1 + i * self.__cell_size_x
+                y1 = self.__y1 + j * self.__cell_size_y
+                x2 = x1 + self.__cell_size_x
+                y2 = y1 + self.__cell_size_y
+                self.__cells[i][j].draw(x1, y1, x2, y2)
+        
+        #for (i, j), (ni, nj) in self.__solution_path:
+        #    self.__cells[i][j].draw_move(self.__cells[ni][nj])
+
+        if self.__win:
+            self.__win.redraw()
+        
+    def __redraw_solution(self):
+        for (i, j), (ni, nj) in self.__solution_path:
+            self.__cells[i][j].draw_move(self.__cells[ni][nj])
+        if self.__win:
+            self.__win.redraw()
+
+    def redraw_cells(self):
+        self.__redraw_all_cells()
+
+    def reset_solution(self):
+        self.__solution_path = set()
 
     def __animate(self, sleep: float| None = None):
         if self.__win is None:
@@ -118,6 +167,10 @@ class Maze:
             for cell in col:
                 cell.visited = False
 
+    def reset_visited(self):
+        self.__reset_cells_visited()
+
+
     def solve_dfs(self) -> bool:
        return self._solve_r(0, 0)
 
@@ -133,10 +186,12 @@ class Maze:
             and not self.__cells[i - 1][j].visited
         ):
             self.__cells[i][j].draw_move(self.__cells[i - 1][j])
+            self.__solution_path.add(((i, j), (i - 1, j)))
             if self._solve_r(i -1, j) == True:
                 return True
             else:
                 self.__cells[i][j].draw_move(self.__cells[i - 1][j], undo= True)
+                self.__solution_path.discard(((i, j), (i - 1, j)))
 
         if (
             i < self.__num_cols - 1
@@ -144,10 +199,12 @@ class Maze:
             and not self.__cells[i + 1][j].visited
         ):
             self.__cells[i][j].draw_move(self.__cells[i + 1][j])
+            self.__solution_path.add(((i, j), (i + 1, j)))
             if self._solve_r(i + 1, j):
                 return True
             else:
                 self.__cells[i][j].draw_move(self.__cells[i + 1][j], undo= True)
+                self.__solution_path.discard(((i, j), (i + 1, j)))
 
         # move up if there is no wall and it hasn't been visited
         if (
@@ -156,10 +213,12 @@ class Maze:
             and not self.__cells[i][j - 1].visited
         ):
             self.__cells[i][j].draw_move(self.__cells[i][j - 1])
+            self.__solution_path.add(((i, j), (i, j - 1)))
             if self._solve_r(i, j - 1):
                 return True
             else:
                 self.__cells[i][j].draw_move(self.__cells[i][j - 1], undo= True)
+                self.__solution_path.discard(((i, j), (i, j - 1)))
 
         # move down if there is no wall and it hasn't been visited
         if (
@@ -168,10 +227,12 @@ class Maze:
             and not self.__cells[i][j + 1].visited
         ):
             self.__cells[i][j].draw_move(self.__cells[i][j + 1])
+            self.__solution_path.add(((i, j), (i, j + 1)))
             if self._solve_r(i, j + 1):
                 return True
             else:
                 self.__cells[i][j].draw_move(self.__cells[i][j + 1], undo= True)
+                self.__solution_path.discard(((i, j), (i, j + 1)))
 
         return False
 
@@ -206,6 +267,7 @@ class Maze:
                     and not self.__cells[ni][nj].visited
                 ):
                     self.__cells[i][j].draw_move(self.__cells[ni][nj])
+                    self.__solution_path.add(((i, j), (ni, nj)))
                     queue.append((ni, nj))
                     self.__cells[ni][nj].visited = True
                     came_from[(ni, nj)] = (i, j)
@@ -216,6 +278,7 @@ class Maze:
                     and not self.__cells[ni][nj].visited
                 ):
                     self.__cells[i][j].draw_move(self.__cells[ni][nj])
+                    self.__solution_path.add(((i, j), (ni, nj)))
                     queue.append((ni, nj))
                     self.__cells[ni][nj].visited = True
                     came_from[(ni, nj)] = (i, j)
@@ -227,6 +290,7 @@ class Maze:
                     and not self.__cells[ni][nj].visited
                 ):
                     self.__cells[i][j].draw_move(self.__cells[ni][nj])
+                    self.__solution_path.add(((i, j), (ni, nj)))
                     queue.append((ni, nj))
                     self.__cells[ni][nj].visited = True
                     came_from[(ni, nj)] = (i, j)
@@ -237,19 +301,24 @@ class Maze:
                     and not self.__cells[ni][nj].visited
                 ):
                     self.__cells[i][j].draw_move(self.__cells[ni][nj])
+                    self.__solution_path.add(((i, j), (ni, nj)))
                     queue.append((ni, nj))
                     self.__cells[ni][nj].visited = True
                     came_from[(ni, nj)] = (i, j)
 
         if solved:
-            solution_path = set()
+            self.__solution_path = set()
+            solution_path = set()  # for dead end detection
             current = (self.__num_cols - 1, self.__num_rows - 1)
             while current is not None:
-                solution_path.add(current)
+                solution_path.add(current)  # track winning cells
                 prev = came_from[current]
                 if prev is not None:
                     self.__cells[current[0]][current[1]].draw_move(
                         self.__cells[prev[0]][prev[1]]
+                    )
+                    self.__solution_path.add(
+                        ((current[0], current[1]), (prev[0], prev[1]))
                     )
                 current = prev
 
@@ -266,4 +335,116 @@ class Maze:
         return solved
     
 
+    def _heuristic(self, i, j):
+        goal_i = self.__num_cols - 1
+        goal_j = self.__num_rows - 1
+        return abs(goal_i - i) + abs(goal_j - j)    
+    
+
+    def solve_astar(self) -> bool:
+        # (f_score, g_score, i, j)
+        start = (self._heuristic(0, 0), 0, 0, 0)
+        open_set: list[tuple[int, int, int, int]] = [start]
+        self.__cells[0][0].visited = True
+        came_from: dict[tuple[int, int], tuple[int, int] | None] = {(0, 0): None}
+        g_score: dict[tuple[int, int], int] = {(0, 0): 0}
+
+        solved = False
+        while open_set:
+            f, g, i, j = heapq.heappop(open_set)
+            self.__animate()
+
+            if i == self.__num_cols - 1 and j == self.__num_rows - 1:
+                solved = True
+                break
+            
+            if g > g_score.get((i, j), float("inf")):
+                continue
+
+            neighbors = [
+                (i - 1, j),  # left
+                (i + 1, j),  # right
+                (i, j - 1),  # up
+                (i, j + 1),  # down
+            ]
+            for ni, nj in neighbors:
+                if (ni == i - 1 
+                    and i > 0 
+                    and not self.__cells[i][j].has_left_wall 
+                ):
+                    new_g = g + 1
+                    if new_g < g_score.get((ni, nj), float("inf")):
+                        g_score[(ni, nj)] = new_g
+                        new_f = new_g + self._heuristic(ni, nj)
+                        heapq.heappush(open_set, (new_f, new_g, ni, nj))
+                        came_from[(ni, nj)] = (i, j)
+                        self.__cells[i][j].draw_move(self.__cells[ni][nj])
+                        self.__solution_path.add(((i, j), (ni, nj)))
+                
+                if (ni == i + 1 
+                    and i < self.__num_cols - 1
+                    and not self.__cells[i][j].has_right_wall 
+                ):
+                    new_g = g + 1
+                    if new_g < g_score.get((ni, nj), float("inf")):
+                        g_score[(ni, nj)] = new_g
+                        new_f = new_g + self._heuristic(ni, nj)
+                        heapq.heappush(open_set, (new_f, new_g, ni, nj))
+                        came_from[(ni, nj)] = (i, j)
+                        self.__cells[i][j].draw_move(self.__cells[ni][nj])
+                        self.__solution_path.add(((i, j), (ni, nj)))
+               
+                
+                if (nj == j - 1 
+                    and j > 0
+                    and not self.__cells[i][j].has_top_wall 
+                ):
+                    new_g = g + 1
+                    if new_g < g_score.get((ni, nj), float("inf")):
+                        g_score[(ni, nj)] = new_g
+                        new_f = new_g + self._heuristic(ni, nj)
+                        heapq.heappush(open_set, (new_f, new_g, ni, nj))
+                        came_from[(ni, nj)] = (i, j)
+                        self.__cells[i][j].draw_move(self.__cells[ni][nj])
+                        self.__solution_path.add(((i, j), (ni, nj)))
+
+                if (nj == j + 1 
+                    and j < self.__num_rows - 1
+                    and not self.__cells[i][j].has_bottom_wall 
+                ):
+                    new_g = g + 1
+                    if new_g < g_score.get((ni, nj), float("inf")):
+                        g_score[(ni, nj)] = new_g
+                        new_f = new_g + self._heuristic(ni, nj)
+                        heapq.heappush(open_set, (new_f, new_g, ni, nj))
+                        came_from[(ni, nj)] = (i, j)
+                        self.__cells[i][j].draw_move(self.__cells[ni][nj])
+                        self.__solution_path.add(((i, j), (ni, nj)))
+
+        if solved:
+            self.__solution_path = set()
+            solution_path = set()  # for dead end detection
+            current = (self.__num_cols - 1, self.__num_rows - 1)
+            while current is not None:
+                solution_path.add(current)  # track winning cells
+                prev = came_from[current]
+                if prev is not None:
+                    self.__cells[current[0]][current[1]].draw_move(
+                        self.__cells[prev[0]][prev[1]]
+                    )
+                    self.__solution_path.add(
+                        ((current[0], current[1]), (prev[0], prev[1]))
+                    )
+                current = prev
+
+            # gray out dead ends
+            for i in range(self.__num_cols):
+                for j in range(self.__num_rows):
+                    if (i, j) in g_score and (i, j) not in solution_path:
+                        prev = came_from.get((i, j))
+                        if prev is not None:
+                            self.__cells[i][j].draw_move(
+                                self.__cells[prev[0]][prev[1]], undo=True
+                            )
         
+        return solved

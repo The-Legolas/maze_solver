@@ -1,11 +1,14 @@
 from __future__ import annotations
-from tkinter import Tk, BOTH, Canvas, Button, Entry, Label, Scale, HORIZONTAL, Frame
+from typing import Callable, Optional
+from tkinter import Tk, BOTH, Canvas, Button, Entry, Label, Scale, HORIZONTAL, Frame, Radiobutton, StringVar
 
 class Window:
 
     def __init__(self, width: int, height: int, on_new_maze=None) -> None:
         self.__root = Tk()
         self.__root.title("Maze Solver")
+        #self.__root.geometry(f"{width}x{height}")
+        self.__resizing = False
 
         # =========================
         # Canvas
@@ -16,22 +19,25 @@ class Window:
             width=width,
             height=height
         )
-        self.__canvas.pack(fill=BOTH, expand=1)
 
+        self.__canvas.pack(fill="both", expand=True)
+
+        
         # =========================
         # Frames
         # =========================
-        top_frame = Frame(self.__root)
-        top_frame.pack(fill="x", pady=5)
 
-        center_frame = Frame(self.__root)
-        center_frame.pack(fill="x", pady=5)
+        self.__bottom_frame = Frame(self.__root)
+        self.__bottom_frame.pack(fill="x", pady=5, side="bottom")
 
-        bottom_frame = Frame(self.__root)
-        bottom_frame.pack(fill="x", pady=5)
+        self.__center_frame = Frame(self.__root)
+        self.__center_frame.pack(fill="x", pady=5, side="bottom")
+
+        self.__top_frame = Frame(self.__root)
+        self.__top_frame.pack(fill="x", pady=5, side="bottom")
 
         
-        maze_controls_frame = Frame(bottom_frame)
+        maze_controls_frame = Frame(self.__bottom_frame)
         maze_controls_frame.pack(side="right", padx=10)
 
         cols_frame = Frame(maze_controls_frame)
@@ -42,10 +48,10 @@ class Window:
         # =========================
         # Seed controls
         # =========================
-        self.__seed_label = Label(top_frame, text="Seed:")
+        self.__seed_label = Label(self.__top_frame, text="Seed:")
         self.__seed_label.pack(side="left", padx=(10, 5))
 
-        self.__seed_entry = Entry(top_frame, width=12)
+        self.__seed_entry = Entry(self.__top_frame, width=12)
         self.__seed_entry.pack(side="left")
 
         # =========================
@@ -64,20 +70,26 @@ class Window:
         # =========================
         if on_new_maze:
             self.__new_maze_btn = Button(
-                center_frame,
+                self.__center_frame,
                 text="New Maze",
                 command=on_new_maze
             )
             self.__new_maze_btn.pack(padx=0)
 
-        self.__algo = "DFS"
+        
 
-        self.__algo_btn = Button(
-            bottom_frame,
-            text="Algorithm: DFS",
-            command=self.__toggle_algo
-        )
-        self.__algo_btn.pack(side="left", padx=5)
+        self.__algo = StringVar(value="DFS")
+
+        for algo in ["DFS", "BFS", "A*"]:
+            Radiobutton(
+                self.__bottom_frame,
+                text=algo,
+                variable=self.__algo,
+                value=algo,
+                font=("Arial", 10),
+                padx=10,
+                pady=5
+            ).pack(side="left", padx=5)
 
         # =========================
         # Speed slider
@@ -85,9 +97,9 @@ class Window:
         self.__speed = 0.005
 
         self.__speed_slider = Scale(
-            bottom_frame,
+            self.__bottom_frame,
             from_=0.000,
-            to=0.1,
+            to=0.2,
             resolution=0.001,
             orient=HORIZONTAL,
             label="Speed",
@@ -102,6 +114,12 @@ class Window:
         # =========================
         self.__running = False
 
+        self.__width = width
+        self.__height = height
+        self.__on_resize_callback: Optional[Callable[[int, int], None]] = None
+        self.__root.bind("<Configure>", self.__on_resize)
+        
+
         self.__root.protocol(
             "WM_DELETE_WINDOW",
             self.close
@@ -109,7 +127,6 @@ class Window:
     
     def get_seed(self):
         value = self.__seed_entry.get()
-        self.__seed_entry.delete(0, "end")
         if value == "":
             return None
         try:
@@ -147,20 +164,52 @@ class Window:
     
     def draw_line(self, line: Line, fill_color: str ="black"):
         line.draw(self.__canvas, fill_color)
-    
-    def __toggle_algo(self):
-        if self.__algo == "DFS":
-            self.__algo = "BFS"
-        else:
-            self.__algo = "DFS"
-        self.__algo_btn.config(text=f"Algorithm: {self.__algo}")
 
     def get_algo(self):
-        return self.__algo
+        return self.__algo.get()
 
     def clear_canvas(self):
         print("Clearing canvas")
         self.__canvas.delete("all")
+
+    def set_resize_callback(self, fn):
+        self.__on_resize_callback = fn
+
+    def get_size(self):
+        return self.__width, self.__height
+
+    def get_canvas_size(self):
+        self.__root.update()
+        actual_canvas_width = self.__canvas.winfo_width()
+        actual_canvas_height = self.__canvas.winfo_height()
+        return actual_canvas_width, actual_canvas_height
+
+    def __on_resize(self, event):
+        if event.widget is not self.__root:
+            return
+        if self.__resizing:
+            return
+
+        new_width = event.width
+        new_height = event.height
+
+        if new_width == self.__width and new_height == self.__height:
+            return
+
+        self.__resizing = True
+        self.__width = new_width
+        self.__height = new_height
+
+
+        if self.__on_resize_callback is not None:
+            callback = self.__on_resize_callback
+            if hasattr(self, "_resize_job") and self._resize_job:
+                self.__root.after_cancel(self._resize_job)
+            self._resize_job = self.__root.after(
+                300, lambda: callback(new_width, new_height)
+            )
+
+        self.__resizing = False
 
     def close(self):
         self.__running = False
