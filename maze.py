@@ -61,7 +61,7 @@ class Maze:
         self.__cells[i][j].draw(x1, y1, x2, y2)
         self.__animate(sleep=0.003)
 
-    def __on_window_resize(self, new_width, new_height):
+    def __on_window_resize(self):
         if self.__win is None:
             return
         canvas_width, canvas_height = self.__win.get_canvas_size()
@@ -81,9 +81,6 @@ class Maze:
                 x2 = x1 + self.__cell_size_x
                 y2 = y1 + self.__cell_size_y
                 self.__cells[i][j].draw(x1, y1, x2, y2)
-        
-        #for (i, j), (ni, nj) in self.__solution_path:
-        #    self.__cells[i][j].draw_move(self.__cells[ni][nj])
 
         if self.__win:
             self.__win.redraw()
