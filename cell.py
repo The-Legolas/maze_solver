@@ -25,11 +25,11 @@ class Cell:
         self._y2 = -1
 
         # Reference to the graphical canvas window
-        self.__win = win
+        self._win = win
 
     def draw(self, x1: int, y1: int, x2: int, y2: int) -> None:
         """Saves pixel boundaries and draws all 4 walls to the canvas."""
-        if self.__win is None:
+        if self._win is None:
             return
         
         self._x1, self._y1 = x1, y1
@@ -46,7 +46,7 @@ class Cell:
         # Render walls: "black" draws visible walls, "white" erases broken walls by matching the background
         for has_wall, start_point, end_point in walls:
             color = "black" if has_wall else "white"
-            self.__win.draw_line(Line(start_point, end_point), color)
+            self._win.draw_line(Line(start_point, end_point), color)
 
         """ old
         if self.has_left_wall:
@@ -86,7 +86,7 @@ class Cell:
 
         Uses red for active exploration and gray when backtracking.
         """
-        if self.__win is None:
+        if self._win is None:
             return
 
         """old
@@ -104,7 +104,7 @@ class Cell:
         
         fill_color = "gray" if undo else "red"
         path_line = Line(self.get_center(), to_cell.get_center())
-        self.__win.draw_line(path_line, fill_color)
+        self._win.draw_line(path_line, fill_color)
         
 
         

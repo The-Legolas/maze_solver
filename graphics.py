@@ -71,7 +71,7 @@ class Window:
         self._create_action_buttons(on_new_maze)
 
         # Window event bindings
-        self._root.bind("<Configure>", self.__on_resize)
+        self._root.bind("<Configure>", self._on_resize)
         self._root.protocol("WM_DELETE_WINDOW", self.close)
 
 
@@ -153,7 +153,7 @@ class Window:
             resolution=0.001,
             orient=HORIZONTAL,
             label="Speed",
-            command=self.__update_speed
+            command=self._update_speed
         )
 
         self._speed_slider.set(self._speed_seconds)
@@ -187,7 +187,7 @@ class Window:
         except ValueError:
             return value
         
-    def __update_speed(self, value: str) -> None:
+    def _update_speed(self, value: str) -> None:
         """Callback triggered automatically whenever the speed slider moves."""
         self._speed_seconds = float(value)
 
@@ -263,7 +263,7 @@ class Window:
         actual_canvas_height = self._canvas.winfo_height()
         return actual_canvas_width, actual_canvas_height
 
-    def __on_resize(self, event)-> None:
+    def _on_resize(self, event)-> None:
         """Handles window resizing events with 'debouncing' to avoid lag."""
         # Ignore resize events triggered by smaller widgets inside the window
         if event.widget is not self._root:
