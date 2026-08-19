@@ -26,16 +26,8 @@ def run_maze(win: Window, state: dict[str, Any]) -> None:
     seed = win.get_seed() or None
     num_rows, num_cols = win.get_maze_dimensions()
     selected_algo = win.get_algo()
-
+    
     # Check if we can reuse the existing maze layout (same dimensions & seed)
-    same_config = (
-        state.get("maze") is not None
-        and seed is not None
-        and state.get("seed") == seed
-        and state.get("num_rows") == num_rows
-        and state.get("num_cols") == num_cols
-    )
-
     same_config = (
         state.get("maze") is not None
         and seed is not None
